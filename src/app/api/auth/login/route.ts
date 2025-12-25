@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getPrisma } from "@/lib/db";
 import { verifyPassword, createSession } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   try {
+    const prisma = await getPrisma();
     const { email, password } = await request.json();
 
     if (!email || !password) {

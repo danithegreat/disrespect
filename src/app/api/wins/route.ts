@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
-import { getWeekStart, CATEGORIES } from "@/lib/utils";
+import { getWeekStart, WIN_CATEGORIES } from "@/lib/utils";
 
 export async function GET(request: NextRequest) {
   const user = await getSession();
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
   startDate.setDate(startDate.getDate() - weeksBack * 7);
   const weekStart = getWeekStart(startDate);
 
-  const disrespects = await prisma.disrespect.findMany({
+  const wins = await prisma.win.findMany({
     where: {
       userId: user.id,
       weekStart: { gte: weekStart },
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     orderBy: { createdAt: "desc" },
   });
 
-  return NextResponse.json({ disrespects });
+  return NextResponse.json({ wins });
 }
 
 export async function POST(request: NextRequest) {
@@ -38,13 +38,13 @@ export async function POST(request: NextRequest) {
     const prisma = await getPrisma();
     const { category, note, isShared } = await request.json();
 
-    if (!category || !Object.keys(CATEGORIES).includes(category)) {
+    if (!category || !Object.keys(WIN_CATEGORIES).includes(category)) {
       return NextResponse.json({ error: "Invalid category" }, { status: 400 });
     }
 
     const weekStart = getWeekStart();
 
-    const disrespect = await prisma.disrespect.create({
+    const win = await prisma.win.create({
       data: {
         userId: user.id,
         category,
@@ -54,11 +54,11 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({ disrespect });
+    return NextResponse.json({ win });
   } catch (error) {
-    console.error("Create disrespect error:", error);
+    console.error("Create win error:", error);
     return NextResponse.json(
-      { error: "Failed to log disrespect" },
+      { error: "Failed to log win" },
       { status: 500 }
     );
   }

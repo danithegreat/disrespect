@@ -36,7 +36,7 @@ export async function GET(
   startDate.setDate(startDate.getDate() - weeksBack * 7);
   const weekStart = getWeekStart(startDate);
 
-  const disrespects = await prisma.disrespect.findMany({
+  const wins = await prisma.win.findMany({
     where: {
       userId: friendId,
       isShared: true,
@@ -50,5 +50,5 @@ export async function GET(
     select: { name: true },
   });
 
-  return NextResponse.json({ disrespects, friendName: friend?.name });
+  return NextResponse.json({ wins, friendName: friend?.name });
 }

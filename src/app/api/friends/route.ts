@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { getPrisma } from "@/lib/db";
 
 export async function GET() {
   const user = await getSession();
@@ -8,6 +8,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const prisma = await getPrisma();
   const friendships = await prisma.friendship.findMany({
     where: {
       OR: [
@@ -16,8 +17,8 @@ export async function GET() {
       ],
     },
     include: {
-      user: { select: { id: true, name: true, email: true } },
-      friend: { select: { id: true, name: true, email: true } },
+      user: { select: { id: true, name: true, email: true, username: true } },
+      friend: { select: { id: true, name: true, email: true, username: true } },
     },
   });
 
@@ -28,7 +29,7 @@ export async function GET() {
   const pendingRequests = await prisma.friendship.findMany({
     where: { friendId: user.id, status: "pending" },
     include: {
-      user: { select: { id: true, name: true, email: true } },
+      user: { select: { id: true, name: true, email: true, username: true } },
     },
   });
 
@@ -48,25 +49,30 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { email } = await request.json();
+    const prisma = await getPrisma();
+    const { friendId } = await request.json();
 
-    const friend = await prisma.user.findUnique({ where: { email } });
-    if (!friend) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    if (!friendId) {
+      return NextResponse.json({ error: "Friend ID required" }, { status: 400 });
     }
 
-    if (friend.id === user.id) {
+    if (friendId === user.id) {
       return NextResponse.json(
         { error: "Cannot add yourself" },
         { status: 400 }
       );
     }
 
+    const friend = await prisma.user.findUnique({ where: { id: friendId } });
+    if (!friend) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
     const existing = await prisma.friendship.findFirst({
       where: {
         OR: [
-          { userId: user.id, friendId: friend.id },
-          { userId: friend.id, friendId: user.id },
+          { userId: user.id, friendId: friendId },
+          { userId: friendId, friendId: user.id },
         ],
       },
     });
@@ -81,12 +87,12 @@ export async function POST(request: NextRequest) {
     await prisma.friendship.create({
       data: {
         userId: user.id,
-        friendId: friend.id,
+        friendId: friendId,
         status: "pending",
       },
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, friendName: friend.name });
   } catch (error) {
     console.error("Add friend error:", error);
     return NextResponse.json(
@@ -103,6 +109,7 @@ export async function PATCH(request: NextRequest) {
   }
 
   try {
+    const prisma = await getPrisma();
     const { friendshipId, action } = await request.json();
 
     const friendship = await prisma.friendship.findUnique({

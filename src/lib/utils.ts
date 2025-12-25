@@ -53,3 +53,28 @@ export const CATEGORIES = {
 } as const;
 
 export type CategoryKey = keyof typeof CATEGORIES;
+
+export const WIN_CATEGORIES = {
+  clutch_moment: {
+    label: "Clutch Moment",
+    color: "bg-green-500",
+    emoji: "🎯",
+  },
+  had_your_back: {
+    label: "Had Your Back",
+    color: "bg-blue-500",
+    emoji: "🛡️",
+  },
+  real_talk: {
+    label: "Real Talk",
+    color: "bg-teal-500",
+    emoji: "💯",
+  },
+  goat_behavior: {
+    label: "GOAT Behavior",
+    color: "bg-emerald-500",
+    emoji: "🐐",
+  },
+} as const;
+
+export type WinCategoryKey = keyof typeof WIN_CATEGORIES;
