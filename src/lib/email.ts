@@ -3,13 +3,22 @@ import { Resend } from "resend";
 function getResend() {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
-    throw new Error("RESEND_API_KEY is not configured");
+    return null;
   }
   return new Resend(apiKey);
 }
 
 export async function sendPasswordResetEmail(email: string, resetUrl: string) {
   const resend = getResend();
+
+  if (!resend) {
+    console.log("\n========== DEV MODE: Password Reset ==========");
+    console.log(`Email: ${email}`);
+    console.log(`Reset URL: ${resetUrl}`);
+    console.log("===============================================\n");
+    return;
+  }
+
   const { error } = await resend.emails.send({
     from: "Disrespect <noreply@resend.dev>",
     to: email,
